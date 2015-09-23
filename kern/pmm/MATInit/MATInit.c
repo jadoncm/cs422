@@ -79,7 +79,6 @@ pmem_init(unsigned int mbi_addr)
 
 		for(; j < upper_b / PAGESIZE; j++)
 		{
-			//KERN_DEBUG("upper_b: %u\ncur_page_sz: %u\n", upper_b, cur_page * 4096);
 			if(is_usable(i)) at_set_perm(j, 2);
 		}
 	}
