@@ -12,12 +12,12 @@ int MATInit_test1()
   for(i = 0; i < nps; i ++) {
     if (at_is_allocated(i) != 0) {
       dprintf("allocated: %d: %d\n", i, at_is_allocated(i));
-      dprintf("test 1 failed.\n");
+      dprintf("test 1 failed.1\n");
       return 1;
     }
     if ((i < 0x40000000/4096 || i >= 0xF0000000/4096) && at_is_norm(i) != 0) {
       dprintf("norm: %d: %d\n", i, at_is_norm(i));
-      dprintf("test 1 failed.\n");
+      dprintf("test 1 failed.2\n");
       return 1;
     }
   }

@@ -1,1 +1,11 @@
 List here the name of your partner, answers to the questions in the "Question" section of the lab, the brief description of what you have implemented, and anything else you would like us to know.
+Worked with: none.
+Questions:
+A.
+1. At line 104 of boot/boot1/boot1.S, the processor prepares to execute in protected 32 bit mode. This is because after the e820.4 instruction, we jump to switch_prot. First the lgdt command is issued, which includes the size of the table to be loaded into the global descriptor table and the base address of the gdt. The values themselves are contained in the assembly code file and are labeled gdt. Then the value of the cr0 register is moved to eax and eax is OR'd with a protected mode enable flag. Finally, the .code32 directive actually forces the assembler to operate in 32 bit mode.  
+Description:
+2. The last instruction of the assembly file is ostensibly calling boot1main. When we're executing the c part of the bootloader, we see that the last command is actually the execution of the exec_kernel file which takes us to the exec_kernel.S file. In that assembly file, the ACTUAL last instruction is in line 10, which is to jump to the address held in the edx register. The first instruction is <start? cli followed by cmp. Then the kern_init function begins. 
+3. According to the debugger, when the move instruction from the 4th variable on the stack is finished, the value of the edx register is 0x102504 (1058052). kern_init begins at 1024a0.
+4. The bootloader examines the ELF header at 0x20000 and looks at its e_phnum field to see the size of the table. Then, each entry of the table is read into memory by the bootloader by the readsection function.
+
+Exercise 3: after messing with the linker and causing boot0's link address to change, the move command on line 41 was compromised as well as the stack setup instructions a few lines later.
