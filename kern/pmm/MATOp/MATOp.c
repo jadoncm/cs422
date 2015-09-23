@@ -27,7 +27,7 @@ unsigned int last_page = VM_USERLO_PI; //stores the last page searched (memoizat
 unsigned int
 palloc()
 {
-  signed int start_page;
+  unsigned int start_page;
   start_page = last_page;
 
   do{ 
