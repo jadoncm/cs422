@@ -2,6 +2,10 @@
 #include <lib/debug.h>
 
 #include "import.h"
+#define VM_USERLO   0x40000000
+#define VM_USERHI   0xF0000000
+
+
 
 /**
  * Sets the entire page map for process 0 as identity map.
@@ -9,13 +13,12 @@
  */
 void pdir_init_kern(unsigned int mbi_adr)
 {
-    // TODO: define your local variables here.
-
+    unsigned int i;
     pdir_init(mbi_adr);
-    
-    //TODO
+    for(i = 0;i < 1024; i++){
+        if(i << 22 >= VM_USERLO || i << 22 < VM_USERHI) set_pdir_entry_identity(0, i);    
+    }
 }
-
 /**
  * Maps the physical page # [page_index] for the given virtual address with the given permission.
  * In the case, when the page table for the page directory entry is not set up, you need to allocate the page table first.
@@ -23,9 +26,16 @@ void pdir_init_kern(unsigned int mbi_adr)
  * otherwise, it returns the physical page index registered in the page directory,
  * e.g., the return value of get_pdir_entry_by_va or alloc_ptbl.
  */
-unsigned int map_page(unsigned int proc_index, unsigned int vadr, unsigned int page_index, unsigned int perm)
+unsigned int map_page(unsigned int proc_index, unsigned int vaddr, unsigned int page_index, unsigned int perm)
 {   
-  // TODO
+  unsigned int result;
+  result = get_pdir_entry_by_va(proc_index, vaddr);
+  if(!result) result = alloc_ptbl(proc_index, vaddr);
+  if(!result) return MagicNumber;
+  else{
+	set_ptbl_entry_by_va(proc_index, vaddr, page_index, perm);
+	return result;  
+  }	 
   return 0;
 }
 
@@ -37,8 +47,10 @@ unsigned int map_page(unsigned int proc_index, unsigned int vadr, unsigned int p
  * You do not need to unmap the page table from the page directory.
  * It should return the corresponding page table entry.
  */
-unsigned int unmap_page(unsigned int proc_index, unsigned int vadr)
+unsigned int unmap_page(unsigned int proc_index, unsigned int vaddr)
 {
-  // TODO
-  return 0;
+  unsigned int result;
+  result = get_ptbl_entry_by_va(proc_index, vaddr);
+  if(result) rmv_ptbl_entry_by_va(proc_index, vaddr);
+  return result;
 }   

@@ -9,26 +9,27 @@ int MPTIntro_test1()
 {
   set_pdir_base(0);
   if ((unsigned int)PDirPool[0] != rcr3()) {
-    dprintf("test 1 failed.\n");
+    dprintf("test 1.1 failed.\n");
     return 1;
   }
   set_pdir_entry_identity(1, 1);
   set_pdir_entry(1, 2, 100);
   if (get_pdir_entry(1, 1) != (unsigned int)IDPTbl[1] +   7) {
-    dprintf("test 1 failed.\n");
+    dprintf("pdir entry: %u, IDPTbl[1]: %u\n", get_pdir_entry(1,1), (unsigned int)IDPTbl[1] + 7);
+    dprintf("test 1.2 failed.\n");
     return 1;
   }
   if (get_pdir_entry(1, 2) != 409607) {
-    dprintf("test 1 failed.\n");
+    dprintf("test 1.3 failed.\n");
     return 1;
   }
   rmv_pdir_entry(1, 1);
   rmv_pdir_entry(1, 2);
   if (get_pdir_entry(1, 1) != 0 || get_pdir_entry(1, 2) != 0) {
-    dprintf("test 1 failed.\n");
+    dprintf("test 1.4 failed.\n");
     return 1;
   }
-  dprintf("test 1 passed.\n");
+  dprintf("test 1.5 passed.\n");
   return 0;
 }
 

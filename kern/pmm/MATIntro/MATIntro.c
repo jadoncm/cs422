@@ -51,8 +51,20 @@ set_nps(unsigned int nps)
 unsigned int
 at_is_norm(unsigned int page_index)
 {
-  if(AT[page_index].perm > 1) return 1;
-  else return 0;
+	unsigned int tperm;
+
+	tperm = AT[page_index].perm;
+
+	if (tperm == 0) {
+		tperm = 0;
+	} else {
+		if (tperm == 1)
+			tperm = 0;
+		else
+			tperm = 1;
+	}
+
+	return tperm;
 }
 
 /**
@@ -63,8 +75,8 @@ at_is_norm(unsigned int page_index)
 void
 at_set_perm(unsigned int page_index, unsigned int norm_val)
 {
-  AT[page_index].perm = norm_val;
-  AT[page_index].allocated = 0;
+	AT[page_index].perm = norm_val;
+	AT[page_index].allocated = 0;
 }
 
 /**
@@ -74,8 +86,15 @@ at_set_perm(unsigned int page_index, unsigned int norm_val)
 unsigned int
 at_is_allocated(unsigned int page_index)
 {
-  if(AT[page_index].allocated == 0) return 0;
-  else return 1;
+	unsigned int allocated;
+
+	allocated = AT[page_index].allocated;
+	if (allocated == 0)
+		allocated = 0;
+	else
+		allocated = 1;
+
+	return allocated;
 }
 
 /**
@@ -85,5 +104,5 @@ at_is_allocated(unsigned int page_index)
 void
 at_set_allocated(unsigned int page_index, unsigned int allocated)
 {
-  AT[page_index].allocated = allocated;
+	AT[page_index].allocated = allocated;
 }

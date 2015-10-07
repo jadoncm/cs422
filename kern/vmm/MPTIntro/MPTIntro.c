@@ -15,6 +15,11 @@
  */
 char * PDirPool[NUM_IDS][1024] gcc_aligned(PAGESIZE);
 
+
+unsigned int get_ptbl(proc_id,pde_index) {
+    return ((unsigned int) PDirPool[proc_id][pde_index] >> 12) << 12;
+}
+
 /**
  * In mCertiKOS, we use identity page table mappings for the kernel memory.
  * IDPTbl is a statically allocated, identity page table that will be reused for
@@ -27,22 +32,21 @@ unsigned int IDPTbl[1024][1024] gcc_aligned(PAGESIZE);
 // sets the CR3 register with the start address of the page structure for process # [index]
 void set_pdir_base(unsigned int index)
 {
-    // TODO
+    set_cr3(PDirPool[index]);
 }
 
 // returns the page directory entry # [pde_index] of the process # [proc_index]
 // this can be used to test whether the page directory entry is mapped
 unsigned int get_pdir_entry(unsigned int proc_index, unsigned int pde_index)
 {
-    // TODO
-    return 0;
+    return (unsigned int) PDirPool[proc_index][pde_index];
 }   
 
 // sets specified page directory entry with the start address of physical page # [page_index].
 // you should also set the permissions PTE_P, PTE_W, and PTE_U
 void set_pdir_entry(unsigned int proc_index, unsigned int pde_index, unsigned int page_index)
 {
-    // TODO
+    PDirPool[proc_index][pde_index] = (char *) ((page_index * PAGESIZE) | PT_PERM_PTU);
 }   
 
 // sets the page directory entry # [pde_index] for the process # [proc_index]
@@ -51,40 +55,44 @@ void set_pdir_entry(unsigned int proc_index, unsigned int pde_index, unsigned in
 // this will be used to map the page directory entry to identity page table.
 void set_pdir_entry_identity(unsigned int proc_index, unsigned int pde_index)
 {   
-    // TODO
+    PDirPool[proc_index][pde_index] = (char *) ((unsigned int)IDPTbl[pde_index] | PT_PERM_PTU);
 }   
 
 // removes specified page directory entry (set the page directory entry to 0).
 // don't forget to cast the value to (char *).
 void rmv_pdir_entry(unsigned int proc_index, unsigned int pde_index)
 {
-    // TODO
+    PDirPool[proc_index][pde_index] = (char *) 0;
 }   
 
 // returns the specified page table entry.
 // do not forget that the permission info is also stored in the page directory entries.
 unsigned int get_ptbl_entry(unsigned int proc_index, unsigned int pde_index, unsigned int pte_index)
 {   
-    // TODO
-    return 0;
+    unsigned int * ptbl = (unsigned int *) get_ptbl(proc_index,pde_index);
+    return ptbl[pte_index];
 }
 
 // sets specified page table entry with the start address of physical page # [page_index]
 // you should also set the given permission
 void set_ptbl_entry(unsigned int proc_index, unsigned int pde_index, unsigned int pte_index, unsigned int page_index, unsigned int perm)
-{   
-    // TODO
+{  
+    unsigned int * ptbl = (unsigned int *) get_ptbl(proc_index,pde_index);
+    ptbl[pte_index] = (page_index * PAGESIZE) | perm;
 }   
 
 // sets the specified page table entry in IDPTbl as the identity map.
 // you should also set the given permission
 void set_ptbl_entry_identity(unsigned int pde_index, unsigned int pte_index, unsigned int perm)
 {
-    // TODO
+   unsigned int i;
+   i = (pde_index << 22) + (pte_index << 12) + perm;
+   IDPTbl[pde_index][pte_index] = i;
 }
 
 // sets the specified page table entry to 0
 void rmv_ptbl_entry(unsigned int proc_index, unsigned int pde_index, unsigned int pte_index)
 {
-    // TODO
+    unsigned int * ptbl = (unsigned int *) get_ptbl(proc_index,pde_index);
+    ptbl[pte_index] = (unsigned int) 0;
 }

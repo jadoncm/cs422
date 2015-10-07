@@ -2,6 +2,9 @@
 
 #include "import.h"
 
+#define VM_USERLO   0x40000000
+#define VM_USERHI   0xF0000000
+#define get_pde(vaddr) vaddr >> 22
 /**
  * For each process from id 0 to NUM_IDS -1,
  * set the page directory entries sothat the kernel portion of the map as identity map,
@@ -9,11 +12,17 @@
  */
 void pdir_init(unsigned int mbi_adr)
 {
-    // TODO: define your local variables here.
-
     idptbl_init(mbi_adr);
 
-    // TODO
+    unsigned int i,j;
+    for (i = 0; i < NUM_IDS; ++i) {
+    	for (j = 0; j < 1024; ++j) {
+    		if (j << 22 < VM_USERLO || j << 22 >= VM_USERHI)
+    			set_pdir_entry_identity(i,j);
+    		else
+    			rmv_pdir_entry(i,j);
+    	}
+    }
 }
 
 /**
@@ -23,10 +32,18 @@ void pdir_init(unsigned int mbi_adr)
  * It returns the page index of the newly allocated physical page.
  * In the case when there's no physical page available, it returns 0.
  */
+
+
 unsigned int alloc_ptbl(unsigned int proc_index, unsigned int vadr)
 {
-  // TODO
-  return 0;
+  unsigned int page_index = container_alloc(proc_index);
+  if (!page_index)
+  	return 0;
+  set_pdir_entry_by_va(proc_index,vadr,page_index);
+  int i;
+  for (i = 0; i < 1024; ++i)
+  	rmv_ptbl_entry(proc_index,get_pde(vadr),i);
+  return page_index;
 }
 
 // Reverse operation of alloc_ptbl.
@@ -34,5 +51,8 @@ unsigned int alloc_ptbl(unsigned int proc_index, unsigned int vadr)
 // and frees the page for the page table entries (with container_free).
 void free_ptbl(unsigned int proc_index, unsigned int vadr)
 {
-  // TODO
+  unsigned int page_index = get_pdir_entry_by_va(proc_index,vadr) >> 12;
+  rmv_pdir_entry_by_va(proc_index,vadr);
+  container_free(proc_index,page_index);
+
 }
