@@ -10,11 +10,12 @@ int PThread_test1()
   void * dummy_addr = (void *) 0;
   unsigned int chid = thread_spawn(dummy_addr, 0, 1000);
   if (tcb_get_state(chid) != TSTATE_READY) {
-    dprintf("test 1 failed.\n");
+    dprintf("test 1.1 failed.\n");
     return 1;
   }
   if (tqueue_get_tail(NUM_IDS) != chid) {
-    dprintf("test 1 failed.\n");
+    dprintf("chid: %u, tail: %u\n", chid, tqueue_get_tail(NUM_IDS));
+    dprintf("test 1.2 failed.\n");
     return 1;
   }
   dprintf("test 1 passed.\n");
