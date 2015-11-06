@@ -6,21 +6,36 @@
 #include <lib/types.h>
 #include <lib/spinlock.h>
 
+static spinlock_t debug_lk;
+
+void debug_spinlock_acquire(){
+	spinlock_acquire(&debug_lk);
+}
+
+void debug_spinlock_release(){
+	spinlock_release(&debug_lk);
+}
+
+void debug_spinlock_init(){
+	spinlock_init(&debug_lk);
+}
+
 void
 debug_init(void)
 {
+	debug_spinlock_init();
 }
 
 void
 debug_info(const char *fmt, ...)
 {
 #ifdef DEBUG_MSG
-
+	debug_spinlock_acquire();
 	va_list ap;
 	va_start(ap, fmt);
 	vdprintf(fmt, ap);
 	va_end(ap);
-
+	debug_spinlock_release();
 #endif
 }
 
@@ -29,12 +44,14 @@ debug_info(const char *fmt, ...)
 void
 debug_normal(const char *file, int line, const char *fmt, ...)
 {
+	debug_spinlock_acquire();
 	dprintf("[D] %s:%d: ", file, line);
 
 	va_list ap;
 	va_start(ap, fmt);
 	vdprintf(fmt, ap);
 	va_end(ap);
+	debug_spinlock_release();
 }
 
 #define DEBUG_TRACEFRAMES	10
@@ -42,6 +59,7 @@ debug_normal(const char *file, int line, const char *fmt, ...)
 static void
 debug_trace(uintptr_t ebp, uintptr_t *eips)
 {
+	debug_spinlock_acquire();
 	int i;
 	uintptr_t *frame = (uintptr_t *) ebp;
 
@@ -51,11 +69,13 @@ debug_trace(uintptr_t ebp, uintptr_t *eips)
 	}
 	for (; i < DEBUG_TRACEFRAMES; i++)
 		eips[i] = 0;
+	debug_spinlock_release();
 }
 
 gcc_noinline void
 debug_panic(const char *file, int line, const char *fmt,...)
 {
+	debug_spinlock_acquire();
 	int i;
 	uintptr_t eips[DEBUG_TRACEFRAMES];
 	va_list ap;
@@ -71,7 +91,7 @@ debug_panic(const char *file, int line, const char *fmt,...)
 		dprintf("\tfrom 0x%08x\n", eips[i]);
 
 	dprintf("Kernel Panic !!!\n");
-
+	debug_spinlock_release();
 	//intr_local_disable();
 	halt();
 }
@@ -79,12 +99,14 @@ debug_panic(const char *file, int line, const char *fmt,...)
 void
 debug_warn(const char *file, int line, const char *fmt,...)
 {
+	debug_spinlock_acquire();
 	dprintf("[W] %s:%d: ", file, line);
 
 	va_list ap;
 	va_start(ap, fmt);
 	vdprintf(fmt, ap);
 	va_end(ap);
+	debug_spinlock_release();
 }
 
 #endif /* DEBUG_MSG */

@@ -4,6 +4,7 @@
 #define _KERN_DEV_VIDEO_H_
 
 #include <lib/types.h>
+#include <lib/spinlock.h>
 
 #ifndef _KERN_
 #error "This is a kernel header file; do not include it in userspace programs."
@@ -183,5 +184,11 @@ void video_putc(int c);
 extern void video_update();
 void video_set_cursor (int x, int y);
 void video_clear_screen ();
+static spinlock_t thread_lk;
+
+void vd_spinlock_init();
+void vd_spinlock_acquire();
+void vd_spinlock_release();
+
 
 #endif /* !_KERN_DEV_VIDEO_H_ */

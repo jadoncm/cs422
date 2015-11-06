@@ -4,10 +4,26 @@
 
 #include <lib/x86.h>
 #include <lib/debug.h>
+#include <lib/spinlock.h>
 
 #include "video.h"
 //tmphack
 //#include<dev/serial.h>
+
+static spinlock_t vd_lk;
+
+void vd_spinlock_init(){
+	spinlock_init(&vd_lk);
+}
+
+void vd_spinlock_acquire(){
+	spinlock_acquire(&vd_lk);
+}
+
+void vd_spinlock_release(){
+	spinlock_release(&vd_lk);
+}
+
 void
 video_init(void)
 {

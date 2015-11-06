@@ -13,10 +13,11 @@
 
 #include <lib/types.h>
 #include <lib/x86.h>
-
+#include <lib/spinlock.h>
 
 #include "console.h"
 #include "serial.h"
+
 
 #define COM1		0x3F8
 #define COM2		0x2F8
@@ -47,6 +48,33 @@
 
 bool serial_exists;
 
+static spinlock_t ser_lk;
+static spinlock_t reg_lk;
+
+void ser_spinlock_init(){
+	spinlock_init(&ser_lk);
+}
+
+void ser_spinlock_acquire(){
+	spinlock_acquire(&ser_lk);
+}
+
+void ser_spinlock_release(){
+	spinlock_release(&ser_lk);
+}
+
+void reg_spinlock_init(){
+	spinlock_init(&reg_lk);
+}
+
+void reg_spinlock_acquire(){
+	spinlock_acquire(&reg_lk);
+}
+
+void reg_spinlock_release(){
+	spinlock_release(&reg_lk);
+}
+
 // Stupid I/O delay routine necessitated by historical PC design flaws
 static void
 delay(void)
@@ -60,8 +88,12 @@ delay(void)
 static int
 serial_proc_data(void)
 {
-	if (!(inb(COM1+COM_LSR) & COM_LSR_DATA))
+	reg_spinlock_acquire();
+	if (!(inb(COM1+COM_LSR) & COM_LSR_DATA)){
+		reg_spinlock_release();
 		return -1;
+	}
+	reg_spinlock_release();
 	return inb(COM1+COM_RX);
 }
 
@@ -75,6 +107,7 @@ serial_intr(void)
 static int
 serial_reformatnewline(int c, int p)
 {
+	reg_spinlock_acquire();
 	int cr = '\r';
 	int nl = '\n';
 	/* POSIX requires newline on the serial line to
@@ -84,17 +117,23 @@ serial_reformatnewline(int c, int p)
 	if (c == nl) {
 		outb(p, cr);
 		outb(p, nl);
+		reg_spinlock_release();
 		return 1;
 	}
-	else
+	else{
+		reg_spinlock_release();
 		return 0;
+	}
 }
 
 void
 serial_putc(char c)
 {
-	if (!serial_exists)
+	reg_spinlock_acquire();
+	if (!serial_exists){
+		reg_spinlock_release();
 		return;
+	}
 
 	int i;
 	for (i = 0;
@@ -104,11 +143,15 @@ serial_putc(char c)
 
 	if (!serial_reformatnewline(c, COM1 + COM_TX))
 		outb(COM1 + COM_TX, c);
+	reg_spinlock_release();
 }
 
 void
 serial_init(void)
 {
+	reg_spinlock_init();
+
+	reg_spinlock_acquire();
 	/* turn off interrupt */
 	outb(COM1 + COM_IER, 0);
 
@@ -133,14 +176,17 @@ serial_init(void)
 	serial_exists = (inb(COM1+COM_LSR) != 0xFF);
 	(void) inb(COM1+COM_IIR);
 	(void) inb(COM1+COM_RX);
+	reg_spinlock_release();
 }
 
 void
 serial_intenable(void)
 {
+	reg_spinlock_acquire();
 	if (serial_exists) {
 		outb(COM1+COM_IER, 1);
 		//intr_enable(IRQ_SERIAL13);
 		serial_intr();
 	}
+	reg_spinlock_release();
 }

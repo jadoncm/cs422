@@ -17,6 +17,7 @@ void intr_init(void);
 void
 devinit (uintptr_t mbi_addr)
 {
+	dprintf("not quite stuck");
 	seg_init (0);
 
 	enable_sse ();
