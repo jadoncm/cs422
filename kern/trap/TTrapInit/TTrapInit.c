@@ -36,9 +36,18 @@ trap_init(unsigned int cpu_idx){
 		KERN_INFO("[AP%d KERN] Register trap handlers ... \n", cpu_idx);
 	}
 
-  // TODO: for CPU # [cpu_idx], register appropriate trap handler for each trap number,
-  // with trap_handler_register function defined above.
 
+	int i;
+  	for(i = T_DIVIDE; i <= T_SECEV; i++){
+  		trap_handler_register(cpu_idx, i, exception_handler);
+  	}
+
+  	for(i = IRQ_TIMER; i <= IRQ_IDE2; i++){
+  		trap_handler_register(cpu_idx, T_IRQ0 + i, interrupt_handler);
+  	}
+
+	trap_handler_register(cpu_idx, T_SYSCALL, syscall_dispatch);
+	
 	if (cpu_idx == 0){
 		KERN_INFO("[BSP KERN] Done.\n");
 	} else {
