@@ -11,6 +11,8 @@
 
 #include "import.h"
 
+static int last_pid[NUM_CPUS]={-1};
+
 static void trap_dump(tf_t *tf)
 {
 	if (tf == NULL)
@@ -99,6 +101,7 @@ static int spurious_intr_handler (void)
 static int timer_intr_handler (void)
 {
     intr_eoi ();
+    sched_update();
     return 0;
 }
 
@@ -140,8 +143,9 @@ void trap (tf_t *tf)
     unsigned int in_kernel;
 
     cur_pid = get_curid ();
-    set_pdir_base (0); //switch to the kernel's page table.
 
+    set_pdir_base (0); //switch to the kernel's page table.
+   
     trap_cb_t f;
 
     f = TRAP_HANDLER[get_pcpu_idx()][tf->trapno];
@@ -153,7 +157,10 @@ void trap (tf_t *tf)
                             tf->trapno, cur_pid, tf->eip);
     }
 
-    kstack_switch(cur_pid);
-    set_pdir_base(cur_pid);
-	  trap_return((void *) tf);
+    //if(last_pid[get_pcpu_idx()] != cur_pid && last_pid[get_pcpu_idx()] != -1){
+      kstack_switch(cur_pid);
+      set_pdir_base(cur_pid);
+    //}
+    //last_pid[get_pcpu_idx()] = cur_pid; 
+    trap_return((void *) tf);
 }

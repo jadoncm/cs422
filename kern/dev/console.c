@@ -16,17 +16,63 @@ struct {
 	uint32_t rpos, wpos;
 } cons;
 
+static spinlock_t cons_lk;
+
+void cons_spinlock_init(){
+  spinlock_init(&cons_lk);
+}
+
+void cons_spinlock_acquire(){
+  spinlock_acquire(&cons_lk);
+}
+
+void cons_spinlock_release(){
+  spinlock_release(&cons_lk);
+}
+
+static spinlock_t vd_lk;
+
+void vd_spinlock_init(){
+	spinlock_init(&vd_lk);
+}
+
+void vd_spinlock_acquire(){
+	spinlock_acquire(&vd_lk);
+}
+
+void vd_spinlock_release(){
+	spinlock_release(&vd_lk);
+}
+
+static spinlock_t ser_lk;
+
+void ser_spinlock_init(){
+        spinlock_init(&ser_lk);
+}
+
+void ser_spinlock_acquire(){
+        spinlock_acquire(&ser_lk);
+}
+
+void ser_spinlock_release(){
+        spinlock_release(&ser_lk);
+}
+
 void
 cons_init()
 {
 	memset(&cons, 0x0, sizeof(cons));
+	cons_spinlock_init();
 	serial_init();
+	ser_spinlock_init();
+	vd_spinlock_init();
 	video_init();
 }
 
 void
 cons_intr(int (*proc)(void))
 {
+	cons_spinlock_acquire();
 	int c;
 
 	while ((c = (*proc)()) != -1) {
@@ -36,6 +82,7 @@ cons_intr(int (*proc)(void))
 		if (cons.wpos == CONSOLE_BUFFER_SIZE)
 			cons.wpos = 0;
 	}
+	cons_spinlock_release();
 
 }
 
@@ -51,13 +98,17 @@ cons_getc(void)
   serial_intr();
   keyboard_intr();
 
+  cons_spinlock_acquire();
   // grab the next character from the input buffer.
   if (cons.rpos != cons.wpos) {
     c = cons.buf[cons.rpos++];
-    if (cons.rpos == CONSOLE_BUFFER_SIZE)
+    if (cons.rpos == CONSOLE_BUFFER_SIZE){
       cons.rpos = 0;
+    }
+    cons_spinlock_release();
     return c;
   }
+  cons_spinlock_release();
 
   return 0;
 }
@@ -65,8 +116,12 @@ cons_getc(void)
 void
 cons_putc(char c)
 {
+	ser_spinlock_acquire();
 	serial_putc(c);
-  video_putc(c);
+	ser_spinlock_release();
+	vd_spinlock_acquire();
+        video_putc(c);
+	vd_spinlock_release();
 }
 
 char

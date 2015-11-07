@@ -97,11 +97,21 @@ void sys_spawn(tf_t *tf)
 		syscall_set_retval1(tf, NUM_IDS);
 		return;
 	}
+/*
+	if(!container_can_consume(elf_addr, quota)){
+		syscall_set_errno(tf, E_EXCEEDS_QUOTA);
+		syscall_set_retval1(tf, NUM_IDS);
+	}
 
+	if(container_get_nchildren(elf_addr) >= 3){
+		syscall_set_errno(tf, E_MAX_NUM_CHILDREN_REACHED);
+		syscall_set_retval1(tf, NUM_IDS);		
+	}
+*/
 	new_pid = proc_create(elf_addr, quota);
 
 	if (new_pid == NUM_IDS) {
-		syscall_set_errno(tf, E_INVAL_PID);
+		syscall_set_errno(tf, E_INVAL_CHILD_ID);
 		syscall_set_retval1(tf, NUM_IDS);
 	} else {
 		syscall_set_errno(tf, E_SUCC);
@@ -125,7 +135,9 @@ void sys_produce(tf_t *tf)
 {
   unsigned int i;
   for(i = 0; i < 5; i++) {
+    intr_local_disable();
     KERN_DEBUG("CPU %d: Process %d: Produced %d\n", get_pcpu_idx(), get_curid(), i);
+    intr_local_enable();
   }
 	syscall_set_errno(tf, E_SUCC);
 }
@@ -134,7 +146,9 @@ void sys_consume(tf_t *tf)
 {
   unsigned int i;
   for(i = 0; i < 5; i++) {
+    intr_local_disable();
     KERN_DEBUG("CPU %d: Process %d: Consumed %d\n", get_pcpu_idx(), get_curid(), i);
+    intr_local_enable();
   }
 	syscall_set_errno(tf, E_SUCC);
 }
