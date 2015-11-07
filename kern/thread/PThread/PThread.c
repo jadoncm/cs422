@@ -50,15 +50,6 @@ unsigned int thread_spawn(void *entry, unsigned int id, unsigned int quota)
 	return pid;
 }
 
-void sched_update(){
-	int cur_val;
-	cur_val = ++cpu_timers[get_pcpu_idx()];
-	if(cur_val >= 5){
-		thread_yield();
-		cpu_timers[get_pcpu_idx()] = 0;
-	}
-}
-
 /**
  * Yield to the next thread in the ready queue.
  * You should set the currently running thread state as ready,
@@ -90,3 +81,14 @@ void thread_yield()
 		thread_spinlock_release();
 	}
 }
+
+void sched_update(){
+	int cur_val;
+	cur_val = ++cpu_timers[get_pcpu_idx()];
+	if(cur_val >= 5){
+		thread_yield();
+		cpu_timers[get_pcpu_idx()] = 0;
+	}
+}
+
+

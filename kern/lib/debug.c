@@ -2,7 +2,7 @@
 #include <lib/gcc.h>
 #include <lib/stdarg.h>
 #include <lib/x86.h>
-
+#include <dev/video.h>
 #include <lib/types.h>
 #include <lib/spinlock.h>
 
@@ -33,7 +33,9 @@ debug_info(const char *fmt, ...)
 	debug_spinlock_acquire();
 	va_list ap;
 	va_start(ap, fmt);
+	vd_spinlock_acquire();
 	vdprintf(fmt, ap);
+	vd_spinlock_release();
 	va_end(ap);
 	debug_spinlock_release();
 #endif
@@ -49,7 +51,9 @@ debug_normal(const char *file, int line, const char *fmt, ...)
 
 	va_list ap;
 	va_start(ap, fmt);
+	vd_spinlock_acquire();
 	vdprintf(fmt, ap);
+	vd_spinlock_release();
 	va_end(ap);
 	debug_spinlock_release();
 }
@@ -83,7 +87,9 @@ debug_panic(const char *file, int line, const char *fmt,...)
 	dprintf("[P] %s:%d: ", file, line);
 
 	va_start(ap, fmt);
+	vd_spinlock_acquire();
 	vdprintf(fmt, ap);
+	vd_spinlock_release();
 	va_end(ap);
 
 	debug_trace(read_ebp(), eips);
@@ -104,7 +110,9 @@ debug_warn(const char *file, int line, const char *fmt,...)
 
 	va_list ap;
 	va_start(ap, fmt);
+	vd_spinlock_acquire();
 	vdprintf(fmt, ap);
+	vd_spinlock_release();
 	va_end(ap);
 	debug_spinlock_release();
 }

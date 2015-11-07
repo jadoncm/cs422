@@ -36,7 +36,6 @@ static spinlock_t rl_lk;
 void
 cons_init()
 {
-  dprintf("not stuck yet!\n");
   print_spinlock_init();
   cons_spinlock_init();
   spinlock_init(&getc_lk);
@@ -130,26 +129,36 @@ readline(const char *prompt)
   int i;
   char c;
 
+  print_spinlock_acquire();
   if (prompt != NULL)
     dprintf("%s", prompt);
 
   i = 0;
   while (1) {
+    spinlock_acquire(&getc_lk);
     c = getchar();
+    spinlock_release(&getc_lk);
+    cons_spinlock_acquire();
     if (c < 0) {
       dprintf("read error: %e\n", c);
       spinlock_release(&rl_lk);
+      print_spinlock_release();
+      cons_spinlock_release();
       return NULL;
     } else if ((c == '\b' || c == '\x7f') && i > 0) {
       putchar('\b');
       i--;
+      cons_spinlock_release();
     } else if (c >= ' ' && i < BUFLEN-1) {
       putchar(c);
       linebuf[i++] = c;
+      cons_spinlock_release();
     } else if (c == '\n' || c == '\r') {
       putchar('\n');
       linebuf[i] = 0;
       spinlock_release(&rl_lk);
+      print_spinlock_release();
+      cons_spinlock_release();
       return linebuf;
     }
   }

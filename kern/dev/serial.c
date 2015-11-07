@@ -100,8 +100,10 @@ serial_proc_data(void)
 void
 serial_intr(void)
 {
+	reg_spinlock_acquire();
 	if (serial_exists)
 		cons_intr(serial_proc_data);
+	reg_spinlock_release();
 }
 
 static int
