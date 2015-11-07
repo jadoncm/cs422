@@ -45,6 +45,12 @@ trap_init(unsigned int cpu_idx){
   		trap_handler_register(cpu_idx, T_IRQ0 + i, interrupt_handler);
   	}
 
+	trap_handler_register(cpu_idx, T_SYSCALL, syscall_dispatch);
+
+	for(i = IPI_RESCHED; i <= IPI_INVALC; i++){
+		trap_handler_register(cpu_idx, T_IPI0 + i, interrupt_handler);
+	}
+
 	if (cpu_idx == 0){
 		KERN_INFO("[BSP KERN] Done.\n");
 	} else {
